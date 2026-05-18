@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2v1 → 3v2 Transition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0a0a0a;font-family:'Barlow',sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:100vh;padding:16px;color:#fff;}
+  .header{text-align:center;margin-bottom:10px;}
+  .header h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:21px;
+    letter-spacing:2px;text-transform:uppercase;color:#C61D23;}
+  .header p{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+  .phase-label{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;color:#fff;background:#C61D23;
+    padding:4px 16px;margin-bottom:8px;min-width:300px;text-align:center;}
+
+  .scene{position:relative;width:380px;height:540px;}
+
+  /* Pitch */
+  .pitch{position:absolute;inset:0;background:#1a5c1a;
+    background-image:repeating-linear-gradient(180deg,transparent,transparent 54px,
+      rgba(0,0,0,.05) 54px,rgba(0,0,0,.05) 108px);}
+  .field-border{position:absolute;top:5px;left:5px;right:5px;bottom:5px;
+    border:2px solid rgba(255,255,255,.6);pointer-events:none;}
+
+  /* Penalty boxes — each is half the field */
+  .box-top{position:absolute;left:52px;right:52px;top:5px;height:262px;
+    border:2px solid rgba(255,255,255,.45);border-top:none;pointer-events:none;}
+  .box-bot{position:absolute;left:52px;right:52px;bottom:5px;height:262px;
+    border:2px solid rgba(255,255,255,.45);border-bottom:none;pointer-events:none;}
+
+  /* 6-yard boxes */
+  .six-top{position:absolute;left:140px;right:140px;top:5px;height:65px;
+    border:2px solid rgba(255,255,255,.35);border-top:none;pointer-events:none;}
+  .six-bot{position:absolute;left:140px;right:140px;bottom:5px;height:65px;
+    border:2px solid rgba(255,255,255,.35);border-bottom:none;pointer-events:none;}
+
+  /* Penalty spots */
+  .pspot{position:absolute;left:50%;width:5px;height:5px;
+    background:rgba(255,255,255,.5);border-radius:50%;transform:translateX(-50%);}
+
+  /* 36-yard line */
+  .yard-line{position:absolute;left:5px;right:5px;top:267px;height:2px;
+    background:rgba(255,255,255,.55);}
+  .yard-lbl{position:absolute;left:8px;top:270px;
+    font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;
+    text-transform:uppercase;color:rgba(255,255,255,.32);}
+
+  /* Small goals ON 36-yard line — open upward (blues attack upward through them) */
+  .sg{position:absolute;width:22px;height:14px;
+    border:2.5px solid rgba(255,255,255,.9);border-bottom:none;
+    background:rgba(255,255,255,.1);top:254px;}
+
+  /* Big goal at bottom */
+  .big-goal{position:absolute;left:153px;right:153px;bottom:5px;height:18px;
+    border:3px solid rgba(255,255,255,.9);border-top:none;
+    background:rgba(255,255,255,.08);}
+
+  /* Queue area labels */
+  .q-lbl{position:absolute;font-family:'Barlow Condensed',sans-serif;
+    font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    color:rgba(255,255,255,.28);}
+
+  /* Penalty arc SVGs */
+  .arc-svg{position:absolute;top:0;left:0;width:380px;height:540px;pointer-events:none;}
+
+  /* Queue dots */
+  .qdot{position:absolute;width:11px;height:11px;border-radius:50%;opacity:.6;z-index:3;}
+  .qdot.red{background:#C61D23;}
+  .qdot.blue{background:#1a6eb5;}
+
+  /* Players */
+  .player{position:absolute;width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#fff;
+    border:2px solid rgba(255,255,255,.22);
+    transition:left .82s cubic-bezier(.4,0,.2,1),top .82s cubic-bezier(.4,0,.2,1),opacity .45s;
+    z-index:10;}
+  .player.red {background:#C61D23;box-shadow:0 0 9px rgba(198,29,35,.5);}
+  .player.blue{background:#1a6eb5;box-shadow:0 0 9px rgba(26,110,181,.5);}
+  .player.gk  {background:#d07000;border-radius:4px;font-size:9px;
+    box-shadow:0 0 8px rgba(208,112,0,.5);}
+  .player.coach{background:#333;border-color:rgba(255,255,255,.5);font-size:10px;}
+  .player.has-ball{border-color:#fff;border-width:3px;}
+
+  .ball{position:absolute;width:14px;height:14px;border-radius:50%;
+    background:#fff;border:1px solid #ccc;z-index:20;
+    transition:left .82s cubic-bezier(.4,0,.2,1),top .82s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 0 9px rgba(255,255,255,.9);}
+
+  /* SVG arrows */
+  .arr{position:absolute;top:0;left:0;width:380px;height:540px;pointer-events:none;z-index:8;}
+
+  /* Scenario badge */
+  .scen-badge{position:absolute;right:10px;top:10px;z-index:25;
+    font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;
+    letter-spacing:2px;padding:4px 12px;
+    color:#fff;border-radius:2px;opacity:0;transition:opacity .4s;white-space:nowrap;}
+  .scen-badge.show{opacity:1;}
+
+  .legend{display:flex;gap:14px;margin-top:8px;justify-content:center;}
+  .leg{display:flex;align-items:center;gap:5px;font-size:10px;color:#aaa;
+    font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;}
+  .ld{width:12px;height:12px;border-radius:50%;}
+  .ld.red{background:#C61D23;}.ld.blue{background:#1a6eb5;}
+  .ld.gk{background:#d07000;border-radius:2px;}
+
+  .step-indicators{display:flex;gap:6px;margin-top:8px;}
+  .step-dot{width:7px;height:7px;border-radius:50%;background:#222;transition:background .3s;}
+  .step-dot.active{background:#C61D23;}.step-dot.done{background:#444;}
+
+  .desc{font-size:11px;color:#555;text-align:center;max-width:380px;
+    margin-top:6px;line-height:1.5;min-height:30px;}
+
+  .controls{display:flex;gap:8px;margin-top:10px;}
+  .btn{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;padding:7px 16px;
+    border:none;cursor:pointer;transition:all .2s;}
+  .btnp{background:#C61D23;color:#fff;}.btnp:hover{background:#e02228;}
+  .btns{background:transparent;color:#555;border:1px solid #222;}
+  .btns:hover{border-color:#555;color:#bbb;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>2v1 → 3v2 Transition</h1>
+  <p>Numbers Up — 36-Yard Field</p>
+</div>
+<div class="phase-label" id="phaseLabel">Setup</div>
+
+<div class="scene">
+  <div class="pitch"></div>
+  <div class="field-border"></div>
+
+  <!-- Top half (above 36-yard line) -->
+  <div class="box-top"></div>
+  <div class="six-top"></div>
+  <div class="pspot" style="top:80px;"></div>
+
+  <!-- Bottom half (below 36-yard line) — big goal end -->
+  <div class="box-bot"></div>
+  <div class="six-bot"></div>
+  <div class="pspot" style="bottom:80px;"></div>
+  <div class="big-goal"></div>
+
+  <!-- 36-yard line -->
+  <div class="yard-line"></div>
+  <div class="yard-lbl">36-yard line</div>
+
+  <!-- Small goals ON 36-yard line — open upward so blues attack through them -->
+  <!-- Left small goal centred at x=125 -->
+  <div class="sg" style="left:114px;"></div>
+  <!-- Right small goal centred at x=255 -->
+  <div class="sg" style="left:244px;"></div>
+
+  <!-- Queue labels -->
+  <div class="q-lbl" style="left:7px;top:18px;">Red queue →</div>
+  <div class="q-lbl" style="left:7px;top:522px;">Blue queue →</div>
+
+  <!-- Red queue dots (top, outside field) -->
+  <div class="qdot red" style="left:20px;top:18px;"></div>
+  <div class="qdot red" style="left:36px;top:18px;"></div>
+  <div class="qdot red" style="left:52px;top:18px;"></div>
+  <div class="qdot red" style="left:325px;top:18px;" id="rq1"></div>
+  <!-- Blue queue dots (bottom, outside field) -->
+  <div class="qdot blue" style="left:20px;top:522px;" id="bq1"></div>
+  <div class="qdot blue" style="left:36px;top:522px;" id="bq2"></div>
+  <div class="qdot blue" style="left:52px;top:522px;"></div>
+  <div class="qdot blue" style="left:270px;top:522px;"></div>
+  <div class="qdot blue" style="left:286px;top:522px;"></div>
+  <div class="qdot blue" style="left:302px;top:522px;"></div>
+
+  <!-- Penalty arcs — tight and proportionate -->
+  <svg class="arc-svg" viewBox="0 0 380 540">
+    <!-- Top arc -->
+    <path d="M 120,267 A 40,40 0 0 0 260,267"
+      fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.8"/>
+    <!-- Bottom arc -->
+    <path d="M 120,272 A 40,40 0 0 1 260,272"
+      fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.8"/>
+  </svg>
+
+  <!-- Coach on right sideline -->
+  <div class="player coach" id="co" style="left:363px;top:254px;z-index:12;">C</div>
+
+  <!-- Scenario badge -->
+  <div class="scen-badge" id="scenBadge"></div>
+
+  <!-- Arrows SVG -->
+  <svg class="arr" id="arrSvg" viewBox="0 0 380 540">
+    <defs>
+      <marker id="mW" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(255,255,255,.85)"/></marker>
+      <marker id="mR" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 Z" fill="#C61D23"/></marker>
+      <marker id="mB" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 Z" fill="#1a6eb5"/></marker>
+    </defs>
+    <!-- Round 1: server pass + R1 run down -->
+    <path id="aServe" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2"
+      stroke-dasharray="7,3" marker-end="url(#mW)" opacity="0"/>
+    <path id="aR1down" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <!-- Round 2: blues attack upward -->
+    <path id="aB1up" fill="none" stroke="#1a6eb5" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mB)" opacity="0"/>
+    <path id="aB2up" fill="none" stroke="#1a6eb5" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mB)" opacity="0"/>
+    <!-- Transition: R2+R3 step down through small goals -->
+    <path id="aR2down" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <path id="aR3down" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <!-- 3v2: red attack arrows + blue recovery -->
+    <path id="aR1att" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <path id="aR2att" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <path id="aR3att" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <path id="aB1def" fill="none" stroke="#1a6eb5" stroke-width="1.8"
+      stroke-dasharray="5,4" marker-end="url(#mB)" opacity="0"/>
+    <path id="aB2def" fill="none" stroke="#1a6eb5" stroke-width="1.8"
+      stroke-dasharray="5,4" marker-end="url(#mB)" opacity="0"/>
+    <!-- Coach new ball feeds -->
+    <path id="aCoach1" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.2"
+      marker-end="url(#mW)" opacity="0"/>
+    <path id="aCoach2" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.2"
+      marker-end="url(#mW)" opacity="0"/>
+    <path id="aCoach3" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.2"
+      marker-end="url(#mW)" opacity="0"/>
+  </svg>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="ld red"></div>Red (queue top)</div>
+  <div class="leg"><div class="ld blue"></div>Blue (queue bottom)</div>
+  <div class="leg"><div class="ld gk"></div>GK</div>
+  <div class="leg"><div class="ld" style="background:#333;border-radius:2px;border:1px solid #666;"></div>Coach</div>
+</div>
+
+<div class="step-indicators" id="stepDots"></div>
+<div class="desc" id="desc"></div>
+
+<div class="controls">
+  <button class="btn btns" id="prevBtn" onclick="go(-1)">← Back</button>
+  <button class="btn btnp" id="playBtn" onclick="toggleAuto()">▶ Auto</button>
+  <button class="btn btns" id="nextBtn" onclick="go(1)">Next →</button>
+</div>
+
+<script>
+const pp = (cx,cy)=>[cx-13,cy-13];
+const bb = (cx,cy)=>[cx-7,cy-7];
+function arw(fx,fy,tx,ty){
+  const dx=tx-fx,dy=ty-fy,len=Math.sqrt(dx*dx+dy*dy)||1;
+  const ox=dx/len*15,oy=dy/len*15;
+  return `M${fx+ox},${fy+oy} L${tx-ox},${ty-oy}`;
+}
+
+// ── Arrow paths ────────────────────────────────────────────────────────
+// Round 1: server at 36-yard line centre → R1 receives near top, runs down to shoot
+document.getElementById('aServe').setAttribute('d',   arw(190,267, 190,155));  // server → R1
+document.getElementById('aR1down').setAttribute('d',  arw(190,155, 190,430));  // R1 runs to goal
+
+// Round 2: Blues enter from bottom queue, attack upward toward small goals
+// B1 → left small goal (x=125), B2 → right small goal (x=255)
+document.getElementById('aB1up').setAttribute('d',    arw(100,525, 125,267));
+document.getElementById('aB2up').setAttribute('d',    arw(265,525, 255,267));
+
+// Transition: R2 (waiting at x=125, y=38) + R3 (x=255, y=38) step DOWN through small goals
+document.getElementById('aR2down').setAttribute('d',  arw(125,235, 140,310));
+document.getElementById('aR3down').setAttribute('d',  arw(255,235, 250,310));
+
+// 3v2: 3 reds drive down toward big goal; blues drop back to defend
+document.getElementById('aR1att').setAttribute('d',   arw(188,298, 185,400));
+document.getElementById('aR2att').setAttribute('d',   arw(140,305, 115,415));
+document.getElementById('aR3att').setAttribute('d',   arw(250,305, 268,412));
+document.getElementById('aB1def').setAttribute('d',   arw(100,310, 155,410));
+document.getElementById('aB2def').setAttribute('d',   arw(270,305, 240,408));
+
+// Coach feeds — horizontal pass from right side to server at centre
+document.getElementById('aCoach1').setAttribute('d', arw(376,267, 198,267));
+document.getElementById('aCoach2').setAttribute('d', arw(376,267, 198,267));
+document.getElementById('aCoach3').setAttribute('d', arw(376,267, 198,267));
+
+// ── Phases ─────────────────────────────────────────────────────────────
+const PH = [
+
+// 0 — Setup
+{ label:"Setup",
+  scen:"", scenCol:"",
+  ball: bb(190,267),
+  arrows:[],
+  desc:"36-yard field — two penalty boxes. Red queue at top, blue queue at bottom. Two small goals on 36-yard line, 15 yards apart. Server at centre. GK in big goal. Round 1: unopposed shooting.",
+  players:[
+    // R2+R3 wait just above 36-yard line, behind small goals
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    // R1 is the active attacker / defender — starts in queue
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(155,267), vis:true},
+    // Server
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    // GK
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(190,520), vis:true},
+    // Blues off field at bottom
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(100,528), vis:false},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(265,528), vis:false},
+  ]
+},
+
+// 1 — Round 1: Server passes to R1 running from top
+{ label:"Round 1 — Serve",
+  scen:"ROUND 1", scenCol:"rgba(198,29,35,.85)",
+  ball: bb(162,267),
+  arrows:['aServe','aR1down'],
+  desc:"Server plays the ball. R1 runs from the queue at the top downfield to receive. No defenders — Round 1 is unopposed finishing.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red has-ball', lbl:'R1', pos:pp(155,267), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,480), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(100,528), vis:false},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(265,528), vis:false},
+  ]
+},
+
+// 2 — Round 1: R1 in on goal
+{ label:"Round 1 — Shoot",
+  scen:"ROUND 1", scenCol:"rgba(198,29,35,.85)",
+  ball: bb(188,408),
+  arrows:[],
+  desc:"R1 receives in stride and drives toward goal. Unopposed — focus on technique, weight of touch, and finish. Blues and R2/R3 not yet involved.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red has-ball', lbl:'R1', pos:pp(180,395), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,468), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(100,528), vis:false},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(265,528), vis:false},
+  ]
+},
+
+
+// 2b — Round 1: Ball in goal, Coach feeds new ball
+{ label:"Round 1 — New Ball",
+  scen:"ROUND 1", scenCol:"rgba(198,29,35,.85)",
+  ball: bb(186,522),
+  arrows:['aCoach1'],
+  desc:"Ball in goal. Coach immediately feeds a new ball from the side. Server receives and the next rep begins.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(180,395), vis:true},
+    {id:'sv', cls:'player gk has-ball', lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,468), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(100,528), vis:false},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(265,528), vis:false},
+  ]
+},
+// 3 — Round 2: 2v1 — Blues enter from bottom, attack upward toward small goals
+{ label:"2v1 — Blues Attack",
+  scen:"2 v 1", scenCol:"rgba(26,110,181,.9)",
+  ball: bb(100,420),
+  arrows:['aB1up','aB2up'],
+  desc:"Round 2. Two blues enter from the bottom queue and attack UPWARD toward the two small goals on the 36-yard line. R1 defends — positioned just below the small goals, facing upward.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(188,295), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,462), vis:true},
+    {id:'b1', cls:'player blue has-ball', lbl:'B1', pos:pp(100,430), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(268,435), vis:true},
+  ]
+},
+
+// 4 — 2v1 in play: blues approaching small goals
+{ label:"2v1 — In Play",
+  scen:"2 v 1", scenCol:"rgba(26,110,181,.9)",
+  ball: bb(108,320),
+  arrows:[],
+  desc:"Blues drive upward with a 2v1 advantage toward the small goals. B1 threatens left goal, B2 threatens right. R1 must choose — central or channel. Decision under pressure.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(185,290), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,462), vis:true},
+    {id:'b1', cls:'player blue has-ball', lbl:'B1', pos:pp(102,308), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(262,312), vis:true},
+  ]
+},
+
+
+// 4b — 2v1: Ball in small goal, Coach feeds new ball
+{ label:"2v1 — Goal! New Ball",
+  scen:"2 v 1", scenCol:"rgba(26,110,181,.9)",
+  ball: bb(114,248),
+  arrows:['aCoach2'],
+  desc:"Blues score in the small goal. Coach immediately feeds a new ball from the sideline. Transition begins — R2 and R3 step through.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(185,290), vis:true},
+    {id:'sv', cls:'player gk has-ball', lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,462), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(102,308), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(262,312), vis:true},
+  ]
+},
+// 5 — Transition: phase ends, R2+R3 step DOWN through small goals to join R1
+{ label:"Transition — Red Joins",
+  scen:"TRANSITION", scenCol:"rgba(240,165,0,.9)",
+  ball: bb(188,282),
+  arrows:['aR2down','aR3down'],
+  desc:"Phase ends. R2 and R3 step DOWN through the small goals from the top. R1 stays. All 3 reds are now in the bottom half — turning to attack the big goal. Blues must recover and defend.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(182,288), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,462), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(148,392), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(232,392), vis:true},
+  ]
+},
+
+// 6 — 3v2: reds now drive DOWNWARD, blues recover to defend with goal at their back
+{ label:"3v2 — Red Attacks",
+  scen:"3 v 2", scenCol:"rgba(198,29,35,.85)",
+  ball: bb(182,305),
+  arrows:['aR1att','aR2att','aR3att','aB1def','aB2def'],
+  desc:"3v2. Reds attack downward — opposite the direction they were just defending. Blues drop back fast. The big goal is now at the blues' backs. R1 central, R2 left, R3 right.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(138,308), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(248,308), vis:true},
+    {id:'r1', cls:'player red has-ball', lbl:'R1', pos:pp(182,300), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(182,472), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(148,395), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(235,395), vis:true},
+  ]
+},
+
+// 7 — 3v2 in box: final phase
+{ label:"3v2 — In the Box",
+  scen:"3 v 2", scenCol:"rgba(198,29,35,.85)",
+  ball: bb(182,398),
+  arrows:[],
+  desc:"3 reds in the box attacking the big goal. 2 blues defending with goal at their back. GK off his line. R1 central, R2 far post, R3 near post — exploit the overload.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(108,420), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(270,415), vis:true},
+    {id:'r1', cls:'player red has-ball', lbl:'R1', pos:pp(175,385), vis:true},
+    {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,460), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(152,415), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(235,412), vis:true},
+  ]
+},
+
+// 7b — 3v2: Ball in big goal, Coach feeds new ball
+{ label:"3v2 — Goal! New Ball",
+  scen:"3 v 2", scenCol:"rgba(198,29,35,.85)",
+  ball: bb(184,522),
+  arrows:['aCoach3'],
+  desc:"Reds finish at the big goal. Coach feeds in a new ball from the side. Drill resets — next group steps in.",
+  players:[
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(108,420), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(270,415), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(175,385), vis:true},
+    {id:'sv', cls:'player gk has-ball', lbl:'S',  pos:pp(190,267), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,460), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(152,415), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(235,412), vis:true},
+  ]
+},
+];
+
+// ── DOM ────────────────────────────────────────────────────────────────
+const scene = document.querySelector('.scene');
+const pEls = {};
+PH[0].players.forEach(p=>{
+  const el=document.createElement('div');
+  el.id=p.id; el.className=p.cls; el.textContent=p.lbl;
+  scene.appendChild(el); pEls[p.id]=el;
+});
+const ballEl=document.createElement('div');
+ballEl.className='ball'; scene.appendChild(ballEl);
+
+const ALL_ARR=['aServe','aR1down','aB1up','aB2up','aR2down','aR3down',
+               'aR1att','aR2att','aR3att','aB1def','aB2def',
+               'aCoach1','aCoach2','aCoach3'];
+
+// ── Render ─────────────────────────────────────────────────────────────
+let current=0,isAuto=false,timer=null;
+
+function applyPhase(idx){
+  const ph=PH[idx];
+  ph.players.forEach(p=>{
+    const el=pEls[p.id]; if(!el) return;
+    el.className=p.cls;
+    el.style.left=p.pos[0]+'px'; el.style.top=p.pos[1]+'px';
+    el.style.opacity=p.vis?'1':'0';
+  });
+  ballEl.style.left=ph.ball[0]+'px'; ballEl.style.top=ph.ball[1]+'px';
+
+  ALL_ARR.forEach(id=>
+    document.getElementById(id).setAttribute('opacity',
+      ph.arrows.includes(id)?'0.88':'0'));
+
+  const sb=document.getElementById('scenBadge');
+  sb.textContent=ph.scen;
+  sb.style.background=ph.scenCol||'transparent';
+  sb.classList.toggle('show',!!ph.scen);
+
+  document.getElementById('phaseLabel').textContent=ph.label;
+  document.getElementById('desc').textContent=ph.desc;
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{
+    d.classList.toggle('active',i===idx);
+    d.classList.toggle('done',i<idx);
+  });
+  document.getElementById('prevBtn').style.opacity=idx===0?'0.3':'1';
+  document.getElementById('nextBtn').style.opacity=idx===PH.length-1?'0.3':'1';
+}
+
+function go(dir){
+  const n=Math.max(0,Math.min(PH.length-1,current+dir));
+  if(n!==current){current=n;applyPhase(current);}
+  if(current===PH.length-1&&isAuto) stopAuto();
+}
+function toggleAuto(){
+  if(isAuto){stopAuto();return;}
+  isAuto=true;document.getElementById('playBtn').textContent='⏸ Pause';
+  if(current===PH.length-1){current=0;applyPhase(0);}
+  timer=setInterval(()=>{
+    if(current<PH.length-1){current++;applyPhase(current);}
+    else stopAuto();
+  },2500);
+}
+function stopAuto(){
+  isAuto=false;clearInterval(timer);
+  document.getElementById('playBtn').textContent='▶ Auto';
+}
+
+PH.forEach((_,i)=>{
+  const d=document.createElement('div');d.className='step-dot';
+  document.getElementById('stepDots').appendChild(d);
+});
+applyPhase(0);
+</script>
+</body>
+</html>
