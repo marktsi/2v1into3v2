@@ -173,9 +173,9 @@
   <div class="qdot red" style="left:52px;top:18px;"></div>
   <div class="qdot red" style="left:325px;top:18px;" id="rq1"></div>
   <!-- Blue queue dots (bottom, outside field) -->
-  <div class="qdot blue" style="left:20px;top:522px;" id="bq1"></div>
-  <div class="qdot blue" style="left:36px;top:522px;" id="bq2"></div>
-  <div class="qdot blue" style="left:52px;top:522px;"></div>
+  <div class="qdot blue" style="left:67px;top:522px;" id="bq1"></div>
+  <div class="qdot blue" style="left:83px;top:522px;" id="bq2"></div>
+  <div class="qdot blue" style="left:99px;top:522px;"></div>
   <div class="qdot blue" style="left:270px;top:522px;"></div>
   <div class="qdot blue" style="left:286px;top:522px;"></div>
   <div class="qdot blue" style="left:302px;top:522px;"></div>
@@ -239,6 +239,17 @@
       marker-end="url(#mW)" opacity="0"/>
     <path id="aCoach3" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.2"
       marker-end="url(#mW)" opacity="0"/>
+    <!-- Round 1 shot into corner -->
+    <path id="aShot" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <!-- 2v1: B1 pressured, passes into open line to B2 -->
+    <path id="aPass" fill="none" stroke="#1a6eb5" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mB)" opacity="0"/>
+    <!-- 3v2 in the box: R1 pass inside B2 + R3 run onto it -->
+    <path id="aR1pass" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
+    <path id="aR3run" fill="none" stroke="#C61D23" stroke-width="2.2"
+      stroke-dasharray="7,3" marker-end="url(#mR)" opacity="0"/>
   </svg>
 </div>
 
@@ -293,6 +304,14 @@ document.getElementById('aCoach1').setAttribute('d', arw(376,267, 198,267));
 document.getElementById('aCoach2').setAttribute('d', arw(376,267, 198,267));
 document.getElementById('aCoach3').setAttribute('d', arw(376,267, 198,267));
 
+// Round 1: R1 finishes into the far corner (not down the middle)
+document.getElementById('aShot').setAttribute('d',   arw(180,405, 216,520));
+// 2v1: B1 is pressured and plays the open line across to B2
+document.getElementById('aPass').setAttribute('d',   arw(138,350, 250,302));
+// 3v2 box: R1 passes inside B2 to the edge of the box; R3 runs onto it
+document.getElementById('aR1pass').setAttribute('d', arw(178,392, 206,452));
+document.getElementById('aR3run').setAttribute('d',  arw(238,438, 212,452));
+
 // ── Phases ─────────────────────────────────────────────────────────────
 const PH = [
 
@@ -319,11 +338,11 @@ const PH = [
 },
 
 // 1 — Round 1: Server passes to R1 running from top
-{ label:"Round 1 — Serve",
+{ label:"Round 1 — Initial Pass",
   scen:"ROUND 1", scenCol:"rgba(198,29,35,.85)",
   ball: bb(162,267),
   arrows:['aServe','aR1down'],
-  desc:"Server plays the ball. R1 runs from the queue at the top downfield to receive. No defenders — Round 1 is unopposed finishing.",
+  desc:"The server plays the initial pass. R1 runs from the queue at the top to receive on the move. No defenders — Round 1 is unopposed finishing.",
   players:[
     {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
     {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
@@ -338,15 +357,15 @@ const PH = [
 // 2 — Round 1: R1 in on goal
 { label:"Round 1 — Shoot",
   scen:"ROUND 1", scenCol:"rgba(198,29,35,.85)",
-  ball: bb(188,408),
-  arrows:[],
-  desc:"R1 receives in stride and drives toward goal. Unopposed — focus on technique, weight of touch, and finish. Blues and R2/R3 not yet involved.",
+  ball: bb(184,405),
+  arrows:['aShot'],
+  desc:"R1 receives in stride and drives toward goal, then finishes into the far corner — not down the middle. Unopposed — focus on technique, weight of touch, and placement.",
   players:[
     {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
     {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
     {id:'r1', cls:'player red has-ball', lbl:'R1', pos:pp(180,395), vis:true},
     {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
-    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,468), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,505), vis:true},
     {id:'b1', cls:'player blue', lbl:'B1', pos:pp(100,528), vis:false},
     {id:'b2', cls:'player blue', lbl:'B2', pos:pp(265,528), vis:false},
   ]
@@ -356,7 +375,7 @@ const PH = [
 // 2b — Round 1: Ball in goal, Coach feeds new ball
 { label:"Round 1 — New Ball",
   scen:"ROUND 1", scenCol:"rgba(198,29,35,.85)",
-  ball: bb(186,522),
+  ball: bb(216,524),
   arrows:['aCoach1'],
   desc:"Ball in goal. Coach immediately feeds a new ball from the side. Server receives and the next rep begins.",
   players:[
@@ -364,7 +383,7 @@ const PH = [
     {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
     {id:'r1', cls:'player red', lbl:'R1', pos:pp(180,395), vis:true},
     {id:'sv', cls:'player gk has-ball', lbl:'S',  pos:pp(190,267), vis:true},
-    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,468), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,505), vis:true},
     {id:'b1', cls:'player blue', lbl:'B1', pos:pp(100,528), vis:false},
     {id:'b2', cls:'player blue', lbl:'B2', pos:pp(265,528), vis:false},
   ]
@@ -389,17 +408,17 @@ const PH = [
 // 4 — 2v1 in play: blues approaching small goals
 { label:"2v1 — In Play",
   scen:"2 v 1", scenCol:"rgba(26,110,181,.9)",
-  ball: bb(108,320),
-  arrows:[],
-  desc:"Blues drive upward with a 2v1 advantage toward the small goals. B1 threatens left goal, B2 threatens right. R1 must choose — central or channel. Decision under pressure.",
+  ball: bb(138,350),
+  arrows:['aPass'],
+  desc:"R1 steps in early and pressures B1 tight to the ball, cutting off the left goal. Forced to react, B1 plays across the open passing line to B2, who is free on the right to finish.",
   players:[
     {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
     {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
-    {id:'r1', cls:'player red', lbl:'R1', pos:pp(185,290), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(150,325), vis:true},
     {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
-    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,462), vis:true},
-    {id:'b1', cls:'player blue has-ball', lbl:'B1', pos:pp(102,308), vis:true},
-    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(262,312), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,470), vis:true},
+    {id:'b1', cls:'player blue has-ball', lbl:'B1', pos:pp(128,342), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(255,300), vis:true},
   ]
 },
 
@@ -407,17 +426,17 @@ const PH = [
 // 4b — 2v1: Ball in small goal, Coach feeds new ball
 { label:"2v1 — Goal! New Ball",
   scen:"2 v 1", scenCol:"rgba(26,110,181,.9)",
-  ball: bb(114,248),
+  ball: bb(255,258),
   arrows:['aCoach2'],
-  desc:"Blues score in the small goal. Coach immediately feeds a new ball from the sideline. Transition begins — R2 and R3 step through.",
+  desc:"B2 receives in the open lane and finishes into the right small goal. Coach immediately feeds a new ball from the sideline. Transition begins — R2 and R3 step through.",
   players:[
     {id:'r2', cls:'player red', lbl:'R2', pos:pp(125,235), vis:true},
     {id:'r3', cls:'player red', lbl:'R3', pos:pp(255,235), vis:true},
-    {id:'r1', cls:'player red', lbl:'R1', pos:pp(185,290), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(150,325), vis:true},
     {id:'sv', cls:'player gk has-ball', lbl:'S',  pos:pp(190,267), vis:true},
-    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,462), vis:true},
-    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(102,308), vis:true},
-    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(262,312), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(185,470), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(128,342), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(255,288), vis:true},
   ]
 },
 // 5 — Transition: phase ends, R2+R3 step DOWN through small goals to join R1
@@ -457,34 +476,34 @@ const PH = [
 // 7 — 3v2 in box: final phase
 { label:"3v2 — In the Box",
   scen:"3 v 2", scenCol:"rgba(198,29,35,.85)",
-  ball: bb(182,398),
-  arrows:[],
-  desc:"3 reds in the box attacking the big goal. 2 blues defending with goal at their back. GK off his line. R1 central, R2 far post, R3 near post — exploit the overload.",
+  ball: bb(206,452),
+  arrows:['aR1pass','aR3run'],
+  desc:"R1 threads the pass inside B2 to the edge of the box, and R3 runs onto it. The GK holds a strong, central position covering the goal. The overload opens the finish.",
   players:[
-    {id:'r2', cls:'player red', lbl:'R2', pos:pp(108,420), vis:true},
-    {id:'r3', cls:'player red', lbl:'R3', pos:pp(270,415), vis:true},
-    {id:'r1', cls:'player red has-ball', lbl:'R1', pos:pp(175,385), vis:true},
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(110,425), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(238,438), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(178,388), vis:true},
     {id:'sv', cls:'player gk',  lbl:'S',  pos:pp(190,267), vis:true},
-    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,460), vis:true},
-    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(152,415), vis:true},
-    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(235,412), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(190,495), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(150,412), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(232,405), vis:true},
   ]
 },
 
 // 7b — 3v2: Ball in big goal, Coach feeds new ball
 { label:"3v2 — Goal! New Ball",
   scen:"3 v 2", scenCol:"rgba(198,29,35,.85)",
-  ball: bb(184,522),
+  ball: bb(163,524),
   arrows:['aCoach3'],
-  desc:"Reds finish at the big goal. Coach feeds in a new ball from the side. Drill resets — next group steps in.",
+  desc:"R3 runs onto R1's pass and finishes first-time into the far corner, away from the GK. Coach feeds in a new ball from the side — the drill resets for the next group.",
   players:[
-    {id:'r2', cls:'player red', lbl:'R2', pos:pp(108,420), vis:true},
-    {id:'r3', cls:'player red', lbl:'R3', pos:pp(270,415), vis:true},
-    {id:'r1', cls:'player red', lbl:'R1', pos:pp(175,385), vis:true},
+    {id:'r2', cls:'player red', lbl:'R2', pos:pp(110,425), vis:true},
+    {id:'r3', cls:'player red', lbl:'R3', pos:pp(210,450), vis:true},
+    {id:'r1', cls:'player red', lbl:'R1', pos:pp(178,388), vis:true},
     {id:'sv', cls:'player gk has-ball', lbl:'S',  pos:pp(190,267), vis:true},
-    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(178,460), vis:true},
-    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(152,415), vis:true},
-    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(235,412), vis:true},
+    {id:'gk', cls:'player gk',  lbl:'GK', pos:pp(190,495), vis:true},
+    {id:'b1', cls:'player blue', lbl:'B1', pos:pp(150,412), vis:true},
+    {id:'b2', cls:'player blue', lbl:'B2', pos:pp(232,405), vis:true},
   ]
 },
 ];
@@ -502,7 +521,8 @@ ballEl.className='ball'; scene.appendChild(ballEl);
 
 const ALL_ARR=['aServe','aR1down','aB1up','aB2up','aR2down','aR3down',
                'aR1att','aR2att','aR3att','aB1def','aB2def',
-               'aCoach1','aCoach2','aCoach3'];
+               'aCoach1','aCoach2','aCoach3',
+               'aShot','aPass','aR1pass','aR3run'];
 
 // ── Render ─────────────────────────────────────────────────────────────
 let current=0,isAuto=false,timer=null;
